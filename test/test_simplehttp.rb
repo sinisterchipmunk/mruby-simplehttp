@@ -63,6 +63,20 @@ assert 'SimpleHttp#get' do
   assert_equal 'Not Found on this server: /notfound', res.body
 end
 
+assert 'SSL set hostname' do
+  # HACK because polarssl hostname is usually write-only
+  class PolarSSL::SSL
+    attr_reader :hostname
+    alias set_hostname2 set_hostname
+    def set_hostname(a)
+      set_hostname2(a)
+      @hostname = a
+    end
+  end
+  http = SimpleHttp.new('https', 'www.google.com', 443)
+  assert_equal 'www.google.com', http.ssl.hostname
+end
+
 assert 'SimpleHttp#post' do
   skip 'mruby-simplehttpserver doesn\'t yet support for getting message body.'
 

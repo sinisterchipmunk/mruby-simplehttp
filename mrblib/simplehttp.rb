@@ -71,6 +71,18 @@ class SimpleHttp
     self
   end
 
+  def ssl
+    @ssl ||= begin
+      entropy = PolarSSL::Entropy.new
+      ctr_drbg = PolarSSL::CtrDrbg.new entropy
+      ssl = PolarSSL::SSL.new
+      ssl.set_endpoint PolarSSL::SSL::SSL_IS_CLIENT
+      ssl.set_rng ctr_drbg
+      ssl.set_hostname @uri[:address]
+      ssl
+    end
+  end
+
   def address; @uri[:address]; end
   def port; @uri[:port]; end
 
@@ -116,11 +128,6 @@ class SimpleHttp
     elsif @use_socket
       socket = TCPSocket.new(@uri[:address], @uri[:port])
       if @uri[:scheme] == "https"
-        entropy = PolarSSL::Entropy.new
-        ctr_drbg = PolarSSL::CtrDrbg.new entropy
-        ssl = PolarSSL::SSL.new
-        ssl.set_endpoint PolarSSL::SSL::SSL_IS_CLIENT
-        ssl.set_rng ctr_drbg
         ssl.set_socket socket
         ssl.handshake
         ssl.write request_header
